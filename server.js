@@ -129,21 +129,113 @@ app.get('/tile/:z/:x/:y', async (req, res) => {
 });
 
 // ============ 4. BASE DE DATOS ============
-const pool = mysql.createPool({
-    host:     process.env.DB_HOST     || 'localhost',
-    user:     process.env.DB_USER     || 'root',
-    password: process.env.DB_PASSWORD || 'Betoben1',
-    // ✅ Ajustado al nombre real indicado por el usuario (puedes sobreescribirlo con DB_NAME)
-    database: process.env.DB_NAME     || 'encuesta_sucua_bd',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+const DATABASE_URL = process.env.DATABASE_URL;
+let db;
+let pgPool;
+let isPostgres = false;
 
-const db = pool.promise();
+if (DATABASE_URL) {
+    // PostgreSQL (Render)
+    const { Pool } = require('pg');
+    pgPool = new Pool({
+        connectionString: DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    });
+    isPostgres = true;
+
+    function pgConvert(sql, params = []) {
+        let idx = 1;
+        let s = sql.replace(/\?/g, () => `$${idx++}`);
+        // ON DUPLICATE KEY UPDATE x = VALUES(x) → ON CONFLICT DO UPDATE SET x = EXCLUDED.x
+        s = s.replace(/ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\1\)/g, 'ON CONFLICT DO UPDATE SET $1 = EXCLUDED.$1');
+        s = s.replace(/ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\w+\)/g, 'ON CONFLICT DO UPDATE SET $1 = EXCLUDED.$1');
+        // FIELD(x, 'a','b','c') → CASE x WHEN 'a' THEN 1 WHEN 'b' THEN 2 WHEN 'c' THEN 3 END
+        s = s.replace(/ORDER BY FIELD\((\w+),\s*'([^']+)'(?:,\s*'([^']+)')*(?:,\s*'([^']+)')*\)/g, (_, col, v1, v2, v3) => {
+            let caseExpr = `CASE ${col}`;
+            if (v1) caseExpr += ` WHEN '${v1}' THEN 1`;
+            if (v2) caseExpr += ` WHEN '${v2}' THEN 2`;
+            if (v3) caseExpr += ` WHEN '${v3}' THEN 3`;
+            caseExpr += ' END';
+            return `ORDER BY ${caseExpr}`;
+        });
+        // DATE_FORMAT(x, '%d/%m/%Y') → TO_CHAR(x, 'DD/MM/YYYY')
+        s = s.replace(/DATE_FORMAT\((\w+\.\w+),\s*'%d\/%m\/%Y'\)/g, "TO_CHAR($1, 'DD/MM/YYYY')");
+        s = s.replace(/DATE_FORMAT\((\w+\.\w+),\s*'%H:%i:%s'\)/g, "TO_CHAR($1, 'HH24:MI:SS')");
+        return { sql: s, params };
+    }
+
+    db = {
+        execute: async (sql, params = []) => {
+            const converted = pgConvert(sql, params);
+            let pgSql = converted.sql;
+            let isInsert = /^\s*INSERT\s/i.test(pgSql);
+            let isWrite = /^\s*(INSERT|UPDATE|DELETE)\s/i.test(pgSql);
+            if (isInsert && !/RETURNING/i.test(pgSql)) {
+                pgSql += ' RETURNING id';
+            }
+            const result = await pgPool.query(pgSql, converted.params);
+            if (isInsert && result.rows.length > 0) {
+                return [{ insertId: result.rows[0].id, affectedRows: result.rowCount }, result.fields];
+            }
+            if (isWrite) {
+                return [{ affectedRows: result.rowCount }, result.fields];
+            }
+            return [result.rows, result.fields];
+        },
+        query: async (sql, params = []) => {
+            const converted = pgConvert(sql, params);
+            let pgSql = converted.sql;
+            let isInsert = /^\s*INSERT\s/i.test(pgSql);
+            let isWrite = /^\s*(INSERT|UPDATE|DELETE)\s/i.test(pgSql);
+            if (isInsert && !/RETURNING/i.test(pgSql)) {
+                pgSql += ' RETURNING id';
+            }
+            const result = await pgPool.query(pgSql, converted.params);
+            if (isInsert && result.rows.length > 0) {
+                return [{ insertId: result.rows[0].id, affectedRows: result.rowCount }, result.fields];
+            }
+            if (isWrite) {
+                return [{ affectedRows: result.rowCount }, result.fields];
+            }
+            return [result.rows, result.fields];
+        }
+    };
+    console.log('✅ PostgreSQL detectado (DATABASE_URL)');
+} else {
+    // MySQL (local)
+    const mysql = require('mysql2');
+    const mysqlPool = mysql.createPool({
+        host:     process.env.DB_HOST     || 'localhost',
+        user:     process.env.DB_USER     || 'root',
+        password: process.env.DB_PASSWORD || 'Betoben1',
+        database: process.env.DB_NAME     || 'encuesta_sucua_bd',
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+    });
+    db = mysqlPool.promise();
+    console.log('✅ MySQL detectado (local)');
+}
 
 async function initSistemaConfig() {
     try {
+        if (isPostgres) {
+            await db.execute(`
+                CREATE TABLE IF NOT EXISTS sistema_config (
+                    clave VARCHAR(64) PRIMARY KEY,
+                    valor VARCHAR(255) NOT NULL DEFAULT '0'
+                )
+            `);
+            const [rows] = await db.execute(
+                "SELECT valor FROM sistema_config WHERE clave = 'acceso_bloqueado'"
+            );
+            if (!rows.length) {
+                await db.execute(
+                    "INSERT INTO sistema_config (clave, valor) VALUES ('acceso_bloqueado', '0') ON CONFLICT DO NOTHING"
+                );
+            }
+            return;
+        }
         await db.execute(`
             CREATE TABLE IF NOT EXISTS sistema_config (
                 clave VARCHAR(64) PRIMARY KEY,
@@ -169,6 +261,7 @@ async function initSistemaConfig() {
  * - Si no existe la columna, la agrega con un valor por defecto.
  */
 async function asegurarColumnaDignidad() {
+    if (isPostgres) return;
     try {
         const [tablas] = await db.execute(
             "SELECT COUNT(*) AS total FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'votos'"
@@ -191,6 +284,7 @@ async function asegurarColumnaDignidad() {
 }
 
 async function asegurarColumnaPasswordUsuarios() {
+    if (isPostgres) return;
     try {
         const [tablas] = await db.execute(
             "SELECT COUNT(*) AS total FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios'"
@@ -236,6 +330,7 @@ async function setAccesoBloqueado(bloquear) {
 
 // ===== Ubicación =====
 async function asegurarColumnasUbicacion() {
+    if (isPostgres) return;
     try {
         const [tablas] = await db.execute(
             "SELECT COUNT(*) AS total FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'votos'"
@@ -267,6 +362,7 @@ async function asegurarColumnasUbicacion() {
 }
 
 async function asegurarColumnasVotosNuevas() {
+    if (isPostgres) return;
     try {
         const [tablas] = await db.execute(
             "SELECT COUNT(*) AS total FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'votos'"
@@ -294,6 +390,7 @@ async function asegurarColumnasVotosNuevas() {
 }
 
 async function asegurarColumnaRespuestas() {
+    if (isPostgres) return;
     try {
         const [cols] = await db.execute(
             "SELECT CHARACTER_MAXIMUM_LENGTH AS maxlen FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'respuestas' AND COLUMN_NAME = 'respuesta' LIMIT 1"
@@ -730,7 +827,7 @@ app.post('/registrar', registerLimiter, validarRegistro, async (req, res) => {
 
     } catch (err) {
         console.error("❌ Error registrando usuario:", err.message);
-        if (err.code === 'ER_DUP_ENTRY') {
+        if (err.code === 'ER_DUP_ENTRY' || err.code === '23505') {
             return res.status(409).json({ success: false, message: 'El usuario o cédula ya existe en el sistema' });
         }
         res.status(500).json({ success: false, message: 'Error interno: ' + err.message });
@@ -1660,9 +1757,12 @@ app.post('/reiniciar-encuesta', autenticarSesion, requiereRol('superadmin'), asy
     try {
         await db.execute('DELETE FROM respuestas');
         const [result] = await db.execute('DELETE FROM votos');
-        const eliminados = result.affectedRows;
-        // Reiniciar contador id_voto (DELETE no resetea AUTO_INCREMENT en MySQL)
-        await db.execute('ALTER TABLE votos AUTO_INCREMENT = 1');
+        const eliminados = isPostgres ? result.rowCount : result.affectedRows;
+        if (isPostgres) {
+            await db.execute("ALTER SEQUENCE votos_id_seq RESTART WITH 1");
+        } else {
+            await db.execute('ALTER TABLE votos AUTO_INCREMENT = 1');
+        }
         console.log(`🔄 Encuesta reiniciada: ${eliminados} votos eliminados, id_voto desde 1`);
         res.json({
             success: true,
