@@ -248,14 +248,25 @@ function requiereRol(...roles) {
 
 // ============ 7. RUTAS ============
 
+function verificarPassword(plain, stored) {
+    if (!stored.startsWith('pbkdf2$')) return plain === stored;
+    const partes = stored.split('$');
+    if (partes.length !== 3) return false;
+    const salt = partes[1];
+    const hashGuardado = partes[2];
+    const hashCalculado = crypto.pbkdf2Sync(plain, salt, 120000, 64, 'sha512').toString('hex');
+    if (hashGuardado.length !== hashCalculado.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(hashGuardado, 'hex'), Buffer.from(hashCalculado, 'hex'));
+}
+
 // Login
 app.post('/login', loginLimiter, async (req, res) => {
     try {
         const { usuario, password } = req.body;
         console.log('Login attempt:', usuario, password);
         const result = await db.execute(
-            "SELECT * FROM usuarios WHERE usuario = $1 AND password = $2",
-            [usuario, password]
+            "SELECT * FROM usuarios WHERE usuario = $1",
+            [usuario]
         );
         const rows = result.rows || [];
         console.log('Login result:', rows.length, 'rows');
@@ -263,6 +274,9 @@ app.post('/login', loginLimiter, async (req, res) => {
             return res.status(401).json({ error: 'Credenciales incorrectas' });
         }
         const user = rows[0];
+        if (!verificarPassword(password, user.password)) {
+            return res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
         const token = crypto.randomBytes(32).toString('hex');
         sesiones.set(token, { id: user.id, usuario: user.usuario, rol: user.rol });
         res.json({ success: true, token, user: { id: user.id, usuario: user.usuario, rol: user.rol } });
@@ -273,7 +287,7 @@ app.post('/login', loginLimiter, async (req, res) => {
 });
 
 // Registrar usuario
-app.post('/registrar', registerLimiter, requiereRol('admin', 'superadmin'), async (req, res) => {
+app.post('/registrar', registerLimiter, autenticarSesion, requiereRol('admin', 'superadmin'), async (req, res) => {
     try {
         const { usuario, password, rol } = req.body;
         await db.execute(
