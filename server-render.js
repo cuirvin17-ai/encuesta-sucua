@@ -182,9 +182,10 @@ async function initSistemaConfig() {
                 valor VARCHAR(255) NOT NULL DEFAULT '0'
             )
         `);
-        const [rows] = await db.execute(
+        const result = await db.execute(
             "SELECT valor FROM sistema_config WHERE clave = 'acceso_bloqueado'"
         );
+        const rows = result.rows || result[0] || [];
         if (rows.length === 0) {
             await db.execute(
                 "INSERT INTO sistema_config (clave, valor) VALUES ('acceso_bloqueado', '0')"
@@ -197,9 +198,10 @@ async function initSistemaConfig() {
 
 async function estaAccesoBloqueado() {
     try {
-        const [rows] = await db.execute(
+        const result = await db.execute(
             "SELECT valor FROM sistema_config WHERE clave = 'acceso_bloqueado' LIMIT 1"
         );
+        const rows = result.rows || result[0] || [];
         return rows.length > 0 && rows[0].valor === '1';
     } catch (err) {
         console.error('❌ Error leyendo acceso_bloqueado:', err.message);
