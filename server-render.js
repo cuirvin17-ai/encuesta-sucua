@@ -210,11 +210,19 @@ async function estaAccesoBloqueado() {
 }
 
 async function setAccesoBloqueado(bloquear) {
-    await db.execute(
-        `INSERT INTO sistema_config (clave, valor) VALUES ('acceso_bloqueado', ${DATABASE_URL ? '$1' : '?'})
-         ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
-        [bloquear ? '1' : '0']
-    );
+    if (DATABASE_URL) {
+        await db.execute(
+            `INSERT INTO sistema_config (clave, valor) VALUES ('acceso_bloqueado', $1)
+             ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor`,
+            [bloquear ? '1' : '0']
+        );
+    } else {
+        await db.execute(
+            `INSERT INTO sistema_config (clave, valor) VALUES ('acceso_bloqueado', ?)
+             ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
+            [bloquear ? '1' : '0']
+        );
+    }
 }
 
 // ============ 6. AUTENTICACIÓN ============
@@ -257,7 +265,7 @@ app.post('/login', loginLimiter, async (req, res) => {
         const user = rows[0];
         const token = crypto.randomBytes(32).toString('hex');
         sesiones.set(token, { id: user.id, usuario: user.usuario, rol: user.rol });
-        res.json({ token, usuario: user.usuario, rol: user.rol });
+        res.json({ success: true, token, user: { id: user.id, usuario: user.usuario, rol: user.rol } });
     } catch (err) {
         console.error('Error login:', err);
         res.status(500).json({ error: 'Error del servidor' });
