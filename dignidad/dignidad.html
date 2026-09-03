@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selección de Dignidad - Sucúa 2026</title>
+
+    <!-- Reutilizamos el estilo de la pantalla de zona -->
+    <link rel="stylesheet" href="../zona/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        const idUsuario = localStorage.getItem('idUsuario');
+        const nombreUsuario = localStorage.getItem('nombreUsuarioActivo');
+        if (!idUsuario || !nombreUsuario) {
+            window.location.href = "../acceso/acceso.html";
+        }
+    </script>
+</head>
+<body class="zona-body">
+
+    <div class="top-bar">
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span id="nombreEncuestador">Encuestador</span>
+        </div>
+        <button onclick="cerrarSesion()" class="btn-logout-top">
+            <i class="fas fa-sign-out-alt"></i> Salir
+        </button>
+    </div>
+
+    <div class="container-zona">
+        <div class="card">
+            <div class="icon-circle">
+                <i class="fas fa-list-check"></i>
+            </div>
+
+            <h2>Dignidad a encuestar</h2>
+            <p>Seleccione la dignidad antes de escoger la zona.</p>
+
+            <form id="formDignidad">
+                <div class="select-box">
+                    <select id="selectDignidad" required onchange="activarBoton()">
+                        <option value="" disabled selected>-- Seleccione una dignidad --</option>
+                        <option value="ALCALDE">Alcalde</option>
+                        <option value="CONCEJALES_URBANOS">Concejales urbanos</option>
+                        <option value="CONCEJALES_RURALES">Concejales rurales</option>
+                        <option value="JUNTAS_PARROQUIALES">Juntas parroquiales</option>
+                    </select>
+                </div>
+
+                <button type="button" id="btnNextDignidad" class="btn-next" disabled onclick="irAZona()">
+                    Continuar <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="dignidad.js"></script>
+</body>
+</html>
+

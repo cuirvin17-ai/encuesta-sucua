@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Personal - Sucúa 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        // ✅ CORREGIDO: IIFE para aislar variables y no conflictar con registro.js
+        (function() {
+            var _id  = localStorage.getItem('idUsuario');
+            var _rol = localStorage.getItem('rolUsuario');
+            if (!_id || (_rol !== 'admin' && _rol !== 'superadmin')) {
+                window.location.href = '../acceso/acceso.html';
+            }
+        })();
+    </script>
+
+    <style>
+        @keyframes slideInRight {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0);   opacity: 1; }
+        }
+        input:invalid       { border-color: #feb2b2; }
+        input:focus:invalid { outline: none; box-shadow: 0 0 0 3px rgba(245,101,101,0.2); }
+    </style>
+</head>
+
+<body class="login-body">
+
+    <div class="login-card">
+        <div style="text-align:center; margin-bottom:15px;">
+            <i class="fas fa-user-plus" style="font-size:2.5rem; color:#00a884;"></i>
+        </div>
+
+        <h2>Nuevo Usuario</h2>
+        <p>Complete los datos para crear la cuenta en el sistema</p>
+
+        <form id="formRegistro" autocomplete="off">
+
+            <div class="input-group">
+                <label for="reg-cedula">Número de Cédula</label>
+                <input type="text" id="reg-cedula"
+                       placeholder="Ej: 1400XXXXXX"
+                       maxlength="15"
+                       autocomplete="new-password"
+                       required>
+            </div>
+
+            <div class="input-group">
+                <label for="reg-user">Nombre de Usuario</label>
+                <input type="text" id="reg-user"
+                       placeholder="Nombre para iniciar sesión"
+                       autocomplete="new-password"
+                       required>
+            </div>
+
+            <div class="input-group">
+                <label for="reg-pass">Contraseña</label>
+                <input type="password" id="reg-pass"
+                       placeholder="••••••••"
+                       autocomplete="new-password"
+                       required>
+            </div>
+
+            <div class="input-group">
+                <label for="reg-rol">Rol del Sistema</label>
+                <select id="reg-rol" required>
+                    <option value="encuestador" selected>Encuestador (App Móvil)</option>
+                    <option value="admin">Administrador (Panel Web)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-login" id="btnCrear">
+                <i class="fas fa-save"></i> Crear Usuario
+            </button>
+        </form>
+
+        <div style="margin-top:20px; text-align:center;">
+            <a href="../administrador/admin.html"
+               style="color:#00a884; text-decoration:none; font-size:0.9rem; font-weight:bold;">
+                <i class="fas fa-arrow-left"></i> Volver al Panel
+            </a>
+        </div>
+    </div>
+
+    <!-- Notificación de éxito -->
+    <div id="msgFeedback" style="
+        display:none;
+        position:fixed;
+        top:30px; right:30px;
+        background:#ffffff;
+        color:#00a884;
+        padding:20px 40px;
+        border-radius:15px;
+        border-left:8px solid #00a884;
+        box-shadow:0 15px 40px rgba(0,0,0,0.4);
+        z-index:10000;
+        font-weight:800;
+        font-size:1.2rem;
+        align-items:center;
+        gap:15px;
+        min-width:350px;
+        animation:slideInRight 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+    ">
+        <i class="fas fa-check-circle" style="font-size:2rem;"></i>
+        <span>¡Usuario registrado con éxito!</span>
+    </div>
+
+    <script src="registro.js"></script>
+</body>
+</html>

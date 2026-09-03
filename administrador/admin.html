@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <title>Panel de Control - Sucúa 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/leaflet/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../assets/leaflet/leaflet.js"></script>
+    <script src="../assets/leaflet/leaflet-heat.js"></script>
+
+    <script>
+        (function() {
+            var _id  = localStorage.getItem('idUsuario');
+            var _rol = localStorage.getItem('rolUsuario');
+            if (!_id || (_rol !== 'admin' && _rol !== 'superadmin')) {
+                window.location.href = "../acceso/acceso.html";
+            }
+        })();
+    </script>
+</head>
+<body>
+
+<div class="admin-container sidebar-is-open">
+
+    <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="cerrarMenu()" aria-hidden="true"></div>
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <nav class="sidebar" id="sidebarNav">
+        <div class="sidebar-header">
+            <i class="fas fa-chart-pie"></i>
+            <div class="sidebar-header-text">
+                <span>Sucúa Vota</span>
+                <small>Panel administrador</small>
+            </div>
+            <button type="button" class="sidebar-close-btn" onclick="cerrarMenu()" aria-label="Cerrar menú">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="menu-section">
+            <span class="menu-label">Principal</span>
+            <a href="javascript:void(0)" id="menuAnalisis"
+               onclick="mostrarSeccion('analisis')" class="menu-item active">
+                <i class="fas fa-chart-bar"></i> <span>Análisis</span>
+            </a>
+            <a href="javascript:void(0)" id="menuMapa"
+                onclick="mostrarSeccion('mapa')" class="menu-item">
+                <i class="fas fa-map-marked-alt"></i> <span>Mapa de Votos</span>
+            </a>
+            <a href="javascript:void(0)" id="menuAnalisisresultados"
+                onclick="mostrarSeccion('analisisresultados')" class="menu-item">
+                <i class="fas fa-trophy"></i> <span>Análisis de Resultados</span>
+            </a>
+            <a href="javascript:void(0)" id="menuRespuestas"
+                onclick="mostrarSeccion('respuestas')" class="menu-item">
+                <i class="fas fa-poll"></i> <span>Respuestas</span>
+            </a>
+            <a href="javascript:void(0)" id="menuAnalisisrespuestas"
+                onclick="mostrarSeccion('analisisrespuestas')" class="menu-item">
+                <i class="fas fa-chart-pie"></i> <span>Análisis de Respuestas</span>
+            </a>
+            <a href="../registro/registro.html" class="menu-item">
+                <i class="fas fa-user-plus"></i> <span>Nuevo Encuestador</span>
+            </a>
+            <a href="javascript:void(0)" id="menuUsuarios"
+                onclick="mostrarSeccion('usuarios')" class="menu-item">
+                <i class="fas fa-users"></i> <span>Usuarios</span>
+            </a>
+        </div>
+
+        <div class="menu-section" id="menuSuperadminGroup" style="display:none;">
+            <span class="menu-label">Superadmin</span>
+            <a href="javascript:void(0)" id="menuCandidatos"
+                onclick="mostrarSeccion('candidatos')" class="menu-item">
+                <i class="fas fa-user-tie"></i> <span>Candidatos</span>
+            </a>
+            <a href="javascript:void(0)" id="menuDignidades"
+                onclick="mostrarSeccion('dignidades')" class="menu-item">
+                <i class="fas fa-list-check"></i> <span>Dignidades</span>
+            </a>
+            <a href="javascript:void(0)" id="menuPreguntas"
+                onclick="mostrarSeccion('preguntas')" class="menu-item">
+                <i class="fas fa-question-circle"></i> <span>Preguntas</span>
+            </a>
+            <a href="javascript:void(0)" id="menuConfiguracion"
+                onclick="mostrarSeccion('configuracion')" class="menu-item">
+                <i class="fas fa-cogs"></i> <span>Nva Encuesta / Bloqueo</span>
+            </a>
+        </div>
+
+        <div class="menu-section">
+            <span class="menu-label">Exportar</span>
+            <button id="btnDescargarExcel" onclick="descargarExcelDignidades()"
+                    class="btn-sidebar-excel">
+                <i class="fas fa-file-excel"></i> <span>Excel Dignidades</span>
+            </button>
+            <button id="btnDescargarExcelPreguntas" onclick="descargarExcelPreguntas()"
+                    class="btn-sidebar-excel" style="margin-top:6px;">
+                <i class="fas fa-file-excel"></i> <span>Excel Preguntas</span>
+            </button>
+        </div>
+
+        <div class="menu-section bottom">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminNombre">Admin</span>
+            </div>
+            <a href="javascript:void(0)" onclick="cerrarSesion()"
+               class="menu-item logout">
+                <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </nav>
+
+    <header class="mobile-topbar">
+        <button type="button" class="btn-menu-movil" onclick="toggleMenu()" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="mobile-topbar-title">
+            <span>Sucúa Vota</span>
+            <small>Panel administrador</small>
+        </div>
+    </header>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main-content">
+
+        <!-- ——— SECCIÓN: ANÁLISIS ——— -->
+        <div id="seccionAnalisis" class="seccion-panel activa">
+
+            <header class="top-header">
+                <div>
+                    <h1>Reporte de Intención de Voto</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Sucúa 2026 · Actualización en tiempo real
+                    </p>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-flag"></i>
+                    <select id="filtroDignidad"></select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <select id="filtroZona">
+                        <option value="todas">Todas las Zonas</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- Superadmin link removido a sus propias secciones -->
+
+            <!-- KPI CARDS -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon verde">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-label">Total Votos</div>
+                        <div class="kpi-value" id="totalVotosGlobal">0</div>
+                        <div class="kpi-sub">registros globales</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon azul">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-label">Candidato Líder</div>
+                        <div class="kpi-value" id="zonaLider"
+                             style="font-size:1rem;letter-spacing:-0.3px;">—</div>
+                        <div class="kpi-sub">mayor intención de voto</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon naranja">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-label">Votos Offline</div>
+                        <div class="kpi-value" id="votosPendientes">0</div>
+                        <div class="kpi-sub">pendientes de sincronizar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICO + BOTÓN REFRESH -->
+            <div class="dashboard-grid">
+                <div class="stats-card chart-box">
+                    <h3>
+                        <i class="fas fa-chart-column"></i>
+                        Distribución · <span id="tituloFiltro"
+                            style="color:#10b981;">General</span>
+                    </h3>
+                    <p class="chart-subtitle">Votos por candidato según zona seleccionada</p>
+                    <div class="canvas-wrapper">
+                        <canvas id="graficoVotos"></canvas>
+                    </div>
+                </div>
+
+                <div class="stats-card summary-box">
+                    <h3 style="margin-bottom:18px;">
+                        <i class="fas fa-list-ol"></i> Consolidado Cantonal
+                    </h3>
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Candidato</th>
+                                <th style="text-align:right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaFija"></tbody>
+                    </table>
+                    <button onclick="inicializarDashboard()" class="btn-refresh-data"
+                            style="margin-top:20px;">
+                        <i class="fas fa-sync"></i> Actualizar datos
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABLA DETALLE POR ZONA -->
+            <div class="stats-card" style="margin-bottom:20px;">
+                <h3>
+                    <i class="fas fa-th-list"></i> Detalle por Zona
+                </h3>
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Candidato</th>
+                            <th>Votos</th>
+                            <th>Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaDinamica"></tbody>
+                </table>
+            </div>
+
+            <!-- DESGLOSE POR CANDIDATO -->
+            <div class="stats-card" style="margin-bottom:20px;">
+                <div class="desglose-header">
+                    <h3 style="margin:0;">
+                        <i class="fas fa-user-tie"></i> Desglose por Candidato
+                    </h3>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-filter" style="color:#10b981;font-size:0.85rem;"></i>
+                        <select id="filtroCandidato" onchange="cargarDesgloseCandidato()"
+                                class="candidato-select">
+                        </select>
+                    </div>
+                </div>
+
+                <div id="resumenCandidato" class="resumen-banner"></div>
+
+                <div class="desglose-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+                    <div>
+                        <div class="desglose-sub-label">
+                            <i class="fas fa-venus-mars"></i> Por Género
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr><th>Género</th><th>Votos</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="cuerpoGenerosCandidato"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <div class="desglose-sub-label">
+                            <i class="fas fa-users"></i> Por Rango de Edad
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr><th>Rango</th><th>Votos</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="cuerpoEdadCandidato"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <div class="desglose-sub-label">
+                            <i class="fas fa-graduation-cap"></i> Por Instrucción
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr><th>Nivel</th><th>Votos</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="cuerpoInstruccionCandidato"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <div class="desglose-sub-label">
+                            <i class="fas fa-briefcase"></i> Por Ocupación
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr><th>Ocupación</th><th>Votos</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="cuerpoOcupacionCandidato"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: USUARIOS ——— -->
+        <div id="seccionUsuarios" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Gestión de Usuarios</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Administra los encuestadores del sistema
+                    </p>
+                </div>
+                <a href="../registro/registro.html" style="
+                    background: linear-gradient(135deg,#10b981,#059669);
+                    color:#fff; padding:10px 20px; border-radius:12px;
+                    text-decoration:none; font-weight:600; font-size:0.88rem;
+                    display:flex; align-items:center; gap:8px;
+                    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+                    transition: all 0.2s;">
+                    <i class="fas fa-user-plus"></i> Nuevo Usuario
+                </a>
+            </header>
+
+            <div class="stats-card">
+                <div style="display:flex;justify-content:space-between;
+                            align-items:center;margin-bottom:18px;">
+                    <h3 style="margin:0;">
+                        <i class="fas fa-users"></i> Usuarios Registrados
+                    </h3>
+                    <button onclick="cargarUsuarios()" style="
+                        background:#f0fdf4; color:#059669; border:1.5px solid #a7f3d0;
+                        padding:8px 16px; border-radius:10px; cursor:pointer;
+                        font-weight:600; font-size:0.83rem; font-family:'Inter',sans-serif;
+                        transition:background 0.2s;">
+                        <i class="fas fa-sync"></i> Actualizar
+                    </button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="tabla-usuarios">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Usuario</th>
+                                <th>Cédula</th>
+                                <th>Rol</th>
+                                <th>Fecha Creación</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaUsuarios">
+                            <tr>
+                                <td colspan="6" style="text-align:center;
+                                    color:#a0aec0;padding:24px;">
+                                    Cargando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: CANDIDATOS (solo superadmin) ——— -->
+        <div id="seccionCandidatos" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Gestión de Candidatos</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Administra los candidatos de cada dignidad
+                    </p>
+                </div>
+            </header>
+
+            <div class="stats-card">
+                <div class="candidatos-toolbar">
+                    <div class="filter-group">
+                        <i class="fas fa-flag"></i>
+                        <select id="filtroCandidatosDignidad" onchange="cargarCandidatos()">
+                            <option value="ALCALDE">Alcalde</option>
+                            <option value="CONCEJALES_URBANOS">Concejales urbanos</option>
+                            <option value="CONCEJALES_RURALES">Concejales rurales</option>
+                            <option value="JUNTAS_PARROQUIALES">Juntas parroquiales</option>
+                            <option value="PREGUNTAS">Preguntas</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="mostrarFormCandidato()">
+                        <i class="fas fa-plus"></i> Nuevo Candidato
+                    </button>
+                </div>
+
+                <div id="candidatoFormContainer" style="display:none;margin-bottom:20px;
+                     padding:20px;background:#f8fafc;border-radius:12px;border:1.5px solid #e2e8f0;">
+                    <h4 id="candidatoFormTitle" style="margin:0 0 16px 0;color:#0f172a;">
+                        <i class="fas fa-user-plus"></i> Nuevo Candidato
+                    </h4>
+                    <form id="candidatoForm" enctype="multipart/form-data">
+                        <input type="hidden" id="editCandidatoId" value="">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div>
+                                <label style="display:block;font-weight:600;font-size:0.85rem;margin-bottom:4px;color:#334155;">Nombre</label>
+                                <input type="text" id="candidatoNombre" required
+                                       style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-weight:600;font-size:0.85rem;margin-bottom:4px;color:#334155;">Dignidad</label>
+                                <select id="candidatoDignidad" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;">
+                                    <option value="ALCALDE">Alcalde</option>
+                                    <option value="CONCEJALES_URBANOS">Concejales urbanos</option>
+                                    <option value="CONCEJALES_RURALES">Concejales rurales</option>
+                                    <option value="JUNTAS_PARROQUIALES">Juntas parroquiales</option>
+                                    <option value="PREGUNTAS">Preguntas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;font-weight:600;font-size:0.85rem;margin-bottom:4px;color:#334155;">Zona (solo Juntas)</label>
+                                <input type="text" id="candidatoZona" placeholder="Dejar vacío para todas"
+                                       style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-weight:600;font-size:0.85rem;margin-bottom:4px;color:#334155;">Orden</label>
+                                <input type="number" id="candidatoOrden" value="0" min="0"
+                                       style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;">
+                            </div>
+                            <div style="grid-column:span 2;">
+                                <label style="display:block;font-weight:600;font-size:0.85rem;margin-bottom:4px;color:#334155;">Foto</label>
+                                <input type="file" id="candidatoFoto" accept="image/*">
+                                <div id="fotoPreview" style="margin-top:8px;display:none;">
+                                    <img id="fotoPreviewImg" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid #e2e8f0;">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:16px;">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="cancelarFormCandidato()">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="tabla-usuarios">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Nombre</th>
+                                <th>Dignidad</th>
+                                <th>Zona</th>
+                                <th>Orden</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaCandidatos">
+                            <tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: PREGUNTAS (solo superadmin) ——— -->
+        <div id="seccionPreguntas" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Gestión de Preguntas</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Administra las preguntas para la encuesta de opinión
+                    </p>
+                </div>
+            </header>
+
+            <div class="stats-card">
+                <div class="candidatos-toolbar">
+                    <button class="btn-primary" onclick="mostrarFormPregunta()">
+                        <i class="fas fa-plus"></i> Nueva Pregunta
+                    </button>
+                </div>
+
+                <div id="preguntaFormContainer" style="display:none;margin-bottom:20px;
+                     padding:20px;background:#f8fafc;border-radius:12px;border:1.5px solid #e2e8f0;">
+                    <h4 id="preguntaFormTitle" style="margin:0 0 16px 0;color:#0f172a;">
+                        <i class="fas fa-plus-circle"></i> Nueva Pregunta
+                    </h4>
+                    <form id="preguntaForm">
+                        <input type="hidden" id="editPreguntaId" value="">
+                        <div>
+                            <label style="display:block;font-weight:600;font-size:0.85rem;margin-bottom:4px;color:#334155;">Pregunta</label>
+                            <textarea id="preguntaTexto" rows="3" required
+                                style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
+                        </div>
+                        <div style="display:flex;gap:20px;margin-top:12px;align-items:center;">
+                            <div>
+                                <label style="font-weight:600;font-size:0.85rem;color:#334155;display:flex;align-items:center;gap:6px;">
+                                    <input type="checkbox" id="preguntaActiva" checked style="accent-color:#059669;">
+                                    Activa
+                                </label>
+                            </div>
+                            <div>
+                                <label style="font-weight:600;font-size:0.85rem;color:#334155;">Orden</label>
+                                <input type="number" id="preguntaOrden" value="0" min="0"
+                                    style="width:80px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;margin-left:8px;">
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:16px;">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="cancelarFormPregunta()">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="tabla-usuarios">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Pregunta</th>
+                                <th>Estado</th>
+                                <th>Orden</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaPreguntas">
+                            <tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: MAPA DE VOTOS ——— -->
+        <div id="seccionMapa" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Mapa de Votos</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Ubicaciones de las encuestas realizadas — alterna entre puntos por candidato y mapa de calor por densidad
+                    </p>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-flag"></i>
+                    <select id="filtroMapaDignidad" onchange="cargarMapaVotos()">
+                        <option value="todas">Todas las dignidades</option>
+                        <option value="ALCALDE">Alcalde</option>
+                        <option value="CONCEJALES_URBANOS">Concejales urbanos</option>
+                        <option value="CONCEJALES_RURALES">Concejales rurales</option>
+                        <option value="JUNTAS_PARROQUIALES">Juntas parroquiales</option>
+                        <option value="PREGUNTAS">Preguntas</option>
+                    </select>
+                </div>
+                <button onclick="alternarModoMapa()" id="btnModoMapa" style="
+                    background:#fef3c7; color:#b45309; border:1.5px solid #fcd34d;
+                    padding:8px 16px; border-radius:10px; cursor:pointer;
+                    font-weight:600; font-size:0.83rem; font-family:'Inter',sans-serif;
+                    transition:background 0.2s;">
+                    <i class="fas fa-fire"></i> <span id="txtModoMapa">Calor</span>
+                </button>
+                <button onclick="cargarMapaVotos()" style="
+                    background:#f0fdf4; color:#059669; border:1.5px solid #a7f3d0;
+                    padding:8px 16px; border-radius:10px; cursor:pointer;
+                    font-weight:600; font-size:0.83rem; font-family:'Inter',sans-serif;
+                    transition:background 0.2s;">
+                    <i class="fas fa-sync"></i> Actualizar
+                </button>
+            </header>
+
+            <div class="stats-card">
+                <div id="mapaVotos" style="height:600px;border-radius:12px;border:1.5px solid #e2e8f0;"></div>
+                <div id="mapaLeyenda" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;"></div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: RESPUESTAS ——— -->
+        <div id="seccionRespuestas" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Respuestas de Preguntas</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Resultados de la encuesta de opinión, desglosados por pregunta
+                    </p>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <select id="filtroRespuestasZona" onchange="cargarRespuestas()">
+                        <option value="todas">Todas las Zonas</option>
+                    </select>
+                </div>
+            </header>
+
+            <div id="respuestasContainer" class="stats-card">
+                <div style="text-align:center;padding:40px;color:#94a3b8;">
+                    <i class="fas fa-circle-notch fa-spin"></i> Cargando respuestas...
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: ANÁLISIS DE RESPUESTAS ——— -->
+        <div id="seccionAnalisisrespuestas" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Análisis de Respuestas</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Análisis de sentimiento y resumen por pregunta
+                    </p>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <select id="filtroAnalisisRespuestasZona" onchange="cargarAnalisisRespuestas()">
+                        <option value="todas">Todas las Zonas</option>
+                    </select>
+                </div>
+            </header>
+
+            <div id="analisisRespuestasContainer" class="stats-card">
+                <div style="text-align:center;padding:40px;color:#94a3b8;">
+                    <i class="fas fa-circle-notch fa-spin"></i> Cargando análisis...
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: ANÁLISIS DE RESULTADOS ——— -->
+        <div id="seccionAnalisisresultados" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Análisis de Resultados</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Dominancia demográfica y perfil de votantes para Alcalde y Concejales
+                    </p>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-flag"></i>
+                    <select id="filtroAnalisisDignidad" onchange="cargarAnalisisResultados()">
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <select id="filtroAnalisisZona" onchange="cargarAnalisisResultados()">
+                        <option value="todas">Todas las Zonas</option>
+                    </select>
+                </div>
+            </header>
+
+            <div id="analisisResultadosContainer" class="stats-card">
+                <div style="text-align:center;padding:40px;color:#94a3b8;">
+                    <i class="fas fa-circle-notch fa-spin"></i> Cargando análisis...
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: DIGNIDADES (solo superadmin) ——— -->
+        <div id="seccionDignidades" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Dignidades Habilitadas</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Activa o desactiva cada dignidad para controlar qué opciones aparecen en la pantalla de encuestado
+                    </p>
+                </div>
+                <span class="badge-superadmin">Superadmin</span>
+            </header>
+
+            <div class="stats-card">
+                <div class="panel-superadmin-header">
+                    <h3><i class="fas fa-list-check"></i> Dignidades</h3>
+                </div>
+                <p class="panel-superadmin-text">
+                    Las dignidades deshabilitadas no se mostrarán a los encuestadores ni administradores.
+                </p>
+                <div id="panelDignidades" class="panel-dignidades">
+                    <div class="panel-dignidades-loading">
+                        <i class="fas fa-circle-notch fa-spin"></i> Cargando dignidades...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ——— SECCIÓN: CONFIGURACIÓN (solo superadmin) ——— -->
+        <div id="seccionConfiguracion" class="seccion-panel">
+
+            <header class="top-header">
+                <div>
+                    <h1>Configuración del Sistema</h1>
+                    <p style="font-size:0.83rem;color:#64748b;margin-top:3px;">
+                        Administra la encuesta y el bloqueo de acceso
+                    </p>
+                </div>
+                <span class="badge-superadmin">Superadmin</span>
+            </header>
+
+            <!-- Nueva encuesta -->
+            <div class="stats-card">
+                <div class="panel-superadmin-header">
+                    <h3><i class="fas fa-rotate-left"></i> Nueva encuesta</h3>
+                    <span class="badge-superadmin">Superadmin</span>
+                </div>
+                <p class="panel-superadmin-text">
+                    Elimina todos los votos registrados para comenzar una encuesta desde cero.
+                    Esta acción no se puede deshacer.
+                </p>
+                <button type="button" id="btnReiniciarEncuesta" class="btn-reiniciar-votos" onclick="reiniciarEncuesta()">
+                    <i class="fas fa-trash-can"></i> Reiniciar votos a cero
+                </button>
+            </div>
+
+            <!-- Bloqueo de acceso -->
+            <div class="stats-card" style="margin-top:20px;">
+                <div class="panel-superadmin-header">
+                    <h3><i class="fas fa-lock"></i> Bloqueo de acceso</h3>
+                    <span class="badge-superadmin">Superadmin</span>
+                </div>
+                <p id="estadoAccesoTexto" class="panel-superadmin-text">
+                    Cargando estado...
+                </p>
+                <button type="button" id="btnToggleAcceso" class="btn-toggle-acceso" onclick="toggleBloqueoAcceso()">
+                    <i class="fas fa-ban"></i> Bloquear acceso
+                </button>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="stats-card" style="margin-top:20px;">
+                <div class="panel-superadmin-header">
+                    <h3><i class="fas fa-map-marker-alt"></i> Captura de ubicación</h3>
+                    <span class="badge-superadmin">Superadmin</span>
+                </div>
+                <p id="estadoUbicacionTexto" class="panel-superadmin-text">
+                    Cargando estado...
+                </p>
+                <button type="button" id="btnToggleUbicacion" class="btn-toggle-acceso" onclick="toggleUbicacion()">
+                    <i class="fas fa-map-pin"></i> Habilitar ubicación
+                </button>
+            </div>
+
+            <!-- Respuestas en admin -->
+            <div class="stats-card" style="margin-top:20px;">
+                <div class="panel-superadmin-header">
+                    <h3><i class="fas fa-poll"></i> Sección Respuestas</h3>
+                    <span class="badge-superadmin">Superadmin</span>
+                </div>
+                <p id="estadoRespuestasTexto" class="panel-superadmin-text">
+                    Cargando estado...
+                </p>
+                <button type="button" id="btnToggleRespuestas" class="btn-toggle-acceso" onclick="toggleRespuestas()">
+                    <i class="fas fa-poll"></i> Habilitar sección
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

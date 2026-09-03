@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selección de Zona - Sucúa 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script>
+        const idUsuario = localStorage.getItem('idUsuario');
+        const nombreUsuario = localStorage.getItem('nombreUsuarioActivo');
+        const dignidadSeleccionada = localStorage.getItem('dignidadSeleccionada');
+        
+        if (!idUsuario || !nombreUsuario) {
+            window.location.href = "../acceso/acceso.html";
+        } else if (!dignidadSeleccionada) {
+            window.location.href = "../dignidad/dignidad.html";
+        }
+    </script>
+</head>
+<body class="zona-body">
+
+    <div class="top-bar">
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i> 
+            <span id="nombreEncuestador">Encuestador</span>
+        </div>
+        <button onclick="irADignidad()" class="btn-logout-top" style="background:#334155;">
+            <i class="fas fa-list-check"></i> Cambiar dignidad
+        </button>
+        <button onclick="cerrarSesion()" class="btn-logout-top">
+            <i class="fas fa-sign-out-alt"></i> Salir
+        </button>
+    </div>
+
+    <!-- Contador flotante — fuera del container, no altera el layout -->
+    <div id="contadorPendientes" style="
+        display: none;
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 999;
+    "></div>
+
+    <div class="container-zona">
+        <div class="card">
+            <div class="icon-circle">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            
+            <h2>Ubicación del Voto</h2>
+            <p>Seleccione el sector de Sucúa donde se realiza la encuesta:</p>
+
+            <form id="formZona">
+                <div class="select-box">
+                    <select id="barriosSucua" required onchange="activarBoton()">
+                        <option value="" disabled selected>-- Seleccione un sector --</option>
+                        
+                        <optgroup label="Zonas Urbanas y Suburbanas">
+                            <option value="Barrio Centro">Barrio Centro</option>
+                            <option value="Barrio Aeropuerto">Barrio Aeropuerto</option>
+                            <option value="Barrio 5 de Esquinas">Barrio 5 de Esquinas</option>
+                            <option value="Barrio Artesanos">Barrio Artesanos</option>
+                            <option value="Barrio Nazareno">Barrio Nazareno</option>
+                            <option value="Barrio 4 de Octubre">Barrio 4 de Octubre</option>
+                            <option value="Barrio 8 de Diciembre">Barrio 8 de Diciembre</option>
+                            <option value="Barrio Progreso">Barrio Progreso</option>
+                            <option value="Barrio Nuevo Israel">Barrio Nuevo Israel</option>
+                            <option value="Barrio Upano">Barrio Upano</option>
+                            <option value="Barrio Norte">Barrio Norte</option>
+                            <option value="Barrio Terminal">Barrio Terminal</option>
+                            <option value="Barrio Amazonas">Barrio Amazonas</option>
+                            <option value="Barrio 3 de Noviembre">Barrio 3 de Noviembre</option>
+                            <option value="Barrio 12 de Febrero">Barrio 12 de Febrero</option>
+                            <option value="Barrio Sur">Barrio Sur</option>
+                            <option value="Barrio Belen">Barrio Belen</option>
+                            <option value="Barrio la Cruz">Barrio la Cruz</option>
+                            <option value="Barrio Paraiso">Barrio Paraiso</option>
+                            <option value="Barrio Huambinimi">Barrio Huambinimi</option>
+                            <option value="Barrio 31 de Agosto">Barrio 31 de Agosto</option>
+                            <option value="Barrio Providencia">Barrio Providencia</option>
+                        </optgroup>
+                        
+                        <optgroup label="Sucua Rural Este">
+                            <option value="Flor del bosque">Flor del bosque</option>
+                            <option value="San Luis del Upano">San Luis del Upano</option>
+                            <option value="Seip">Seip</option>
+                            <option value="San Ramon">San Ramon</option>
+                            <option value="San Carlos">San Carlos</option>
+                            <option value="Maria Auxiliadora">Maria Auxiliadora</option>
+                            <option value="Santa Rosa">Santa Rosa</option>
+                            <option value="San Pablo">San Pablo</option>
+                            <option value="Sera">Sera</option>
+                            <option value="Tuntaim">Tuntaim</option>
+                            <option value="Wawaime">Wawaime</option>
+                            <option value="Yukutais">Yukutais</option>
+                            <option value="Taant">Taant</option>
+                            <option value="Pinchu Naint">Pinchu Naint</option>
+                        </optgroup>
+
+                        <optgroup label="Sucua Rural Oeste">
+                            <option value="Cuyataza">Cuyataza</option>
+                            <option value="Triunfo">Triunfo</option>
+                            <option value="La Merced">La Merced</option>
+                            <option value="Garcia Moreno">Garcia Moreno</option>
+                        </optgroup>
+
+                        <optgroup label="Parroquias Huambi">
+                            <option value="Huambi">Huambi</option>
+                            <option value="Corazon de Jesus">Corazon de Jesus</option>
+                            <option value="Cristal">Cristal</option>
+                            <option value="Tesoro">Tesoro</option>
+                            <option value="kayamas">kayamas</option>
+                            <option value="Cumbatza">Cumbatza</option>
+                            <option value="Cusuimi">Cusuimi</option>
+                        </optgroup>
+
+                        <optgroup label="Parroquia Santa Marianita">
+                            <option value="Santa Marianita">Santa Marianita</option>
+                            <option value="Arapicos">Arapicos</option>
+                            <option value="Bellavista">Bellavista</option>
+                            <option value="Sivino Noguera">Sivino Noguera</option>
+                            <option value="Los Laureles">Los Laureles</option>
+                        </optgroup>
+
+                        <optgroup label="Parroquias Asuncion">
+                            <option value="Asuncion">Asuncion</option>
+                            <option value="Diamante">Diamante</option>
+                            <option value="Kansar">Kansar</option>
+                            <option value="Nuevos Horizontes">Nuevos Horizontes</option>
+                            <option value="Utunkus Norte">Utunkus Norte</option>
+                            <option value="San Jose">San Jose</option>
+                            <option value="Santa Teresita">Santa Teresita</option>
+                            <option value="Sunganza">Sunganza</option>
+                            <option value="Uwe">Uwe</option>
+                            <option value="San Salvador">San Salvador</option>
+                            <option value="San Marcos">San Marcos</option>
+                        </optgroup>
+
+                    </select>
+                </div>
+
+                <button type="button" id="btnNext" class="btn-next" disabled onclick="irAVoto()">
+                    Continuar <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="zona.js"></script>
+</body>
+</html>

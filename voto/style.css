@@ -1,0 +1,258 @@
+/* --- RESET & BASE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+body.voto-body {
+    background: radial-gradient(circle at center, #2c5364 0%, #203a43 50%, #0f2027 100%);
+    min-height: 100vh;
+    color: #ffffff;
+    padding-top: 100px;
+    overflow-x: hidden;
+}
+
+/* --- BARRA SUPERIOR (NAV) --- */
+.voto-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    padding: 0 5%;
+    background: rgba(15, 32, 39, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s all ease;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-5px);
+}
+
+.zona-badge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.zona-label {
+    color: #00a884;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}
+
+.zona-badge {
+    background: rgba(0, 168, 132, 0.15);
+    border: 1px solid rgba(0, 168, 132, 0.3);
+    color: white;
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+}
+
+/* --- CONTENIDO PRINCIPAL --- */
+.encuesta-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.header-encuesta { margin-bottom: 30px; }
+.header-encuesta h2 { font-size: 2rem; font-weight: 800; margin-bottom: 5px; }
+.header-encuesta p { color: #cbd5e0; font-size: 1rem; }
+
+/* --- SELECTOR DE EDAD --- */
+.edad-selector { margin-bottom: 20px; }
+.edad-options { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+.edad-options input[type="radio"] { display: none; }
+
+.edad-options label {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    padding: 15px 30px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.edad-options input[type="radio"]:checked + label {
+    background: #00a884;
+    color: white;
+    border-color: #00a884;
+    box-shadow: 0 0 20px rgba(0, 168, 132, 0.4);
+    transform: translateY(-3px) scale(1.05);
+}
+
+/* --- SELECTOR DE GÉNERO --- */
+.genero-selector { margin-bottom: 30px; }
+.genero-options { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+.genero-options input[type="radio"] { display: none; }
+
+.genero-options label {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    padding: 15px 40px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 130px;
+}
+
+.genero-options input[type="radio"]:checked + label {
+    background: #00a884;
+    color: white;
+    border-color: #00a884;
+    box-shadow: 0 0 20px rgba(0, 168, 132, 0.4);
+    transform: translateY(-3px) scale(1.05);
+}
+
+/* --- SELECTOR DE INSTRUCCIÓN Y OCUPACIÓN --- */
+.instruccion-options,
+.ocupacion-options {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.instruccion-options input[type="radio"],
+.ocupacion-options input[type="radio"] {
+    display: none;
+}
+
+.instruccion-options label,
+.ocupacion-options label {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    padding: 14px 28px;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.instruccion-options input[type="radio"]:checked + label,
+.ocupacion-options input[type="radio"]:checked + label {
+    background: #00a884 !important;
+    color: white !important;
+    border-color: #00a884 !important;
+    box-shadow: 0 0 20px rgba(0, 168, 132, 0.4) !important;
+    transform: translateY(-3px) scale(1.05);
+}
+
+/* --- GRID DE 6 CANDIDATOS --- */
+.candidatos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.card-candidato {
+    background: #ffffff;
+    border-radius: 30px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    border: 4px solid transparent;
+}
+
+.card-candidato:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+}
+
+.img-wrapper {
+    width: 100%;
+    height: 280px;
+    border-radius: 22px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.6s ease;
+}
+
+.card-candidato:hover img { transform: scale(1.1); }
+
+.card-candidato h4 {
+    color: #1a202c;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 10px 0;
+}
+
+/* --- FEEDBACK OVERLAY --- */
+.feedback-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 168, 132, 0.98);
+    backdrop-filter: blur(15px);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    color: white;
+}
+
+.feedback-content { text-align: center; }
+.feedback-content i { font-size: 6rem; margin-bottom: 20px; animation: pop 0.5s ease; }
+.feedback-content p { font-size: 1.8rem; font-weight: 700; }
+
+@keyframes pop {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* --- RESPONSIVO --- */
+@media (max-width: 768px) {
+    .voto-nav { padding: 0 20px; }
+    .candidatos-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .card-candidato { padding: 10px; }
+    .img-wrapper { height: 200px; }
+    .edad-options label,
+    .genero-options label { padding: 12px 20px; }
+}

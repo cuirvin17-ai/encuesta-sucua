@@ -1,0 +1,138 @@
+:root {
+    --primary: #0f172a; 
+    --accent: #10b981; 
+    --white: #ffffff; 
+    --bg: #f1f5f9;
+}
+
+body { 
+    background: var(--bg); 
+    font-family: 'Segoe UI', Roboto, sans-serif; 
+    margin: 0; 
+}
+
+.login-body { 
+    background: linear-gradient(135deg, var(--primary), var(--accent)); 
+    height: 100vh; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden; /* Evita scrolls innecesarios */
+}
+
+.login-card, .zona-card, .chart-card { 
+    background: var(--white); 
+    padding: 2rem; 
+    border-radius: 20px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+    width: 350px; 
+    text-align: center; 
+}
+
+.input-group { 
+    margin-bottom: 1rem; 
+    text-align: left; 
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+input, select { 
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #ddd; 
+    border-radius: 10px; 
+    box-sizing: border-box; /* Importante para que el padding no ensanche el input */
+}
+
+.btn-login, .btn-next { 
+    background: var(--accent); 
+    color: white; 
+    border: none; 
+    padding: 15px; 
+    width: 100%; 
+    border-radius: 10px; 
+    cursor: pointer; 
+    font-weight: bold; 
+    transition: 0.3s; 
+}
+
+.btn-login:hover { 
+    transform: scale(1.05); 
+    filter: brightness(1.1);
+}
+
+/* --- ESTILOS PARA EL MENSAJE DE ÉXITO (TOAST) --- */
+#msgFeedback {
+    /* Los estilos base están en el HTML inline, pero aquí reforzamos la animación */
+    animation: slideInBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideInBounce {
+    from { 
+        transform: translateX(120%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+/* --- OTROS ESTILOS DEL SISTEMA --- */
+.candidatos-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; 
+}
+
+.card-candidato { 
+    background: white; 
+    border-radius: 15px; 
+    cursor: pointer; 
+    transition: 0.2s; 
+    overflow: hidden; 
+    border: 2px solid transparent; 
+}
+
+.card-candidato:active { 
+    transform: scale(0.9); 
+    border-color: var(--accent); 
+}
+
+.card-candidato img { 
+    width: 100%; 
+    height: 120px; 
+    object-fit: cover; 
+}
+
+.sidebar { 
+    width: 250px; 
+    background: var(--primary); 
+    color: white; 
+    padding: 20px; 
+    height: 100vh; 
+}
+
+.dashboard-wrapper { 
+    display: flex; 
+}
+
+.main-content { 
+    flex: 1; 
+    padding: 2rem; 
+}
+
+
+input[type="radio"]:checked + label { 
+    background: var(--accent); 
+    color: white; 
+}
+
+input[type="radio"] { 
+    display: none; 
+}

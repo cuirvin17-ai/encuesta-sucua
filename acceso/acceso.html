@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <meta name="description" content="Sistema de Encuestas Sucúa 2026">
+
+    <!-- Android / Chrome -->
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- iOS / Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Encuesta 2026">
+
+    <title>Acceso — Sistema de Encuestas Sucúa 2026</title>
+
+    <!-- Manifest -->
+    <link rel="manifest" href="../manifest.json">
+
+    <!-- Íconos -->
+    <link rel="icon" href="../icon-192.png" type="image/png">
+    <!-- ✅ CORREGIDO: apple-touch-icon apunta al de 192px -->
+    <link rel="apple-touch-icon" sizes="192x192" href="../icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="../icon-512.png">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="login-body">
+
+    <!-- Aviso sin conexión -->
+    <div id="offline-msg" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        background: #e53e3e;
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        font-weight: 700;
+        z-index: 9999;
+        font-size: 0.9rem;
+    ">
+        ⚠️ Sin conexión — Modo Offline activo
+    </div>
+
+    <!-- Tarjeta de Login -->
+    <div class="login-card">
+
+        <img
+            src="../icon-192.png"
+            alt="Encuestas Sucúa 2026"
+            width="120"
+            height="120"
+            style="border-radius: 16px; margin-bottom: 16px;"
+        >
+
+        <h2>Sistema de Encuestas</h2>
+        <p>Sucúa 2026 — Ingresa tus credenciales</p>
+
+        <form id="loginForm" autocomplete="off">
+
+            <div class="input-group">
+                <label for="user">Usuario</label>
+                <input
+                    type="text"
+                    id="user"
+                    name="user"
+                    placeholder="Ingresa tu usuario"
+                    autocomplete="username"
+                    required
+                >
+            </div>
+
+            <div class="input-group">
+                <label for="pass">Contraseña</label>
+                <input
+                    type="password"
+                    id="pass"
+                    name="pass"
+                    placeholder="Ingresa tu contraseña"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" id="btnIngresar" class="btn-login">
+                🔐 Ingresar al Sistema
+            </button>
+
+        </form>
+
+        <!-- Botón instalar PWA -->
+        <button id="installBtn" style="
+            display: none;
+            margin-top: 14px;
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #00a884;
+            border-radius: 14px;
+            background: transparent;
+            color: #00a884;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        ">
+            📲 Instalar App en este dispositivo
+        </button>
+
+        <p style="margin-top: 20px; font-size: 0.78rem; color: #a0aec0;">
+            Municipio de Sucúa &copy; 2026
+        </p>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="acceso.js"></script>
+    <!-- ✅ CORREGIDO: install-pwa.js cargado después de acceso.js -->
+
+</body>
+</html>

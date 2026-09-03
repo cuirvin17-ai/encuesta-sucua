@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta Táctil - Sucúa 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        const idUsuario = localStorage.getItem('idUsuario');
+        const zonaSeleccionada = localStorage.getItem('zonaSeleccionada');
+        const dignidadSeleccionada = localStorage.getItem('dignidadSeleccionada');
+        if (!idUsuario) window.location.href = "../acceso/acceso.html";
+        else if (!dignidadSeleccionada) window.location.href = "../dignidad/dignidad.html";
+        else if (!zonaSeleccionada) window.location.href = "../zona/zona.html";
+    </script>
+</head>
+
+<body class="voto-body">
+
+    <nav class="voto-nav">
+        <button onclick="regresarAZona()" class="btn-back">
+            <i class="fas fa-chevron-left"></i> Cambiar Zona
+        </button>
+        
+        <div class="zona-badge-container">
+            <span class="zona-label">ZONA:</span>
+            <div class="zona-badge">
+                <i class="fas fa-map-marker-alt"></i> 
+                <span id="displayZona">Cargando...</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="encuesta-container">
+        <div class="header-encuesta">
+            <h2>Registro de Intención de Voto</h2>
+            <p>1. Seleccione edad, género, instrucción y ocupación &nbsp; 2. Toque la foto del candidato</p>
+        </div>
+
+        <!-- Selector de Edad -->
+        <div class="edad-selector">
+            <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:8px;">Rango de Edad</p>
+            <div class="edad-options">
+                <input type="radio" name="edad" value="18-25" id="e1"> 
+                <label for="e1"><span>18-25</span></label>
+                
+                <input type="radio" name="edad" value="26-40" id="e2"> 
+                <label for="e2"><span>26-40</span></label>
+                
+                <input type="radio" name="edad" value="+41" id="e3"> 
+                <label for="e3"><span>+41</span></label>
+            </div>
+        </div>
+
+        <!-- Selector de Género -->
+        <div class="genero-selector">
+            <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:8px;">Género</p>
+            <div class="genero-options">
+                <input type="radio" name="genero" value="Hombre" id="g1"> 
+                <label for="g1"><span>Hombre</span></label>
+                
+                <input type="radio" name="genero" value="Mujer" id="g2"> 
+                <label for="g2"><span>Mujer</span></label>
+            </div>
+        </div>
+
+        <!-- Selector de Nivel de Instrucción -->
+        <div class="instruccion-selector" style="margin-bottom:20px;">
+            <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:8px;">Nivel de Instrucción</p>
+            <div class="instruccion-options">
+                <input type="radio" name="instruccion" value="Primaria" id="i1">
+                <label for="i1">Primaria</label>
+                
+                <input type="radio" name="instruccion" value="Secundaria" id="i2">
+                <label for="i2">Secundaria</label>
+                
+                <input type="radio" name="instruccion" value="Superior" id="i3">
+                <label for="i3">Superior</label>
+            </div>
+        </div>
+
+        <!-- Selector de Ocupación -->
+        <div class="ocupacion-selector" style="margin-bottom:30px;">
+            <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:8px;">Ocupación / Actividad</p>
+            <div class="ocupacion-options">
+                <input type="radio" name="ocupacion" value="Comerciante" id="o1">
+                <label for="o1">Comerciante</label>
+                
+                <input type="radio" name="ocupacion" value="Agricultor" id="o2">
+                <label for="o2">Agricultor</label>
+                
+                <input type="radio" name="ocupacion" value="Empleado público" id="o3">
+                <label for="o3">Empleado público</label>
+                
+                <input type="radio" name="ocupacion" value="Ama de casa" id="o4">
+                <label for="o4">Ama de casa</label>
+                
+                <input type="radio" name="ocupacion" value="Estudiante" id="o5">
+                <label for="o5">Estudiante</label>
+                
+                <input type="radio" name="ocupacion" value="Otro" id="o6">
+                <label for="o6">Otro</label>
+            </div>
+        </div>
+
+        <!-- La grilla se renderiza dinámicamente según la dignidad -->
+        <div id="candidatosGrid" class="candidatos-grid"></div>
+
+        <div id="feedback" class="feedback-overlay" style="display:none;">
+            <div class="feedback-content">
+                <i class="fas fa-check-circle"></i>
+                <p>¡Voto Registrado!</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="voto.js"></script>
+</body>
+</html>
