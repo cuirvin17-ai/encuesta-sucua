@@ -244,11 +244,13 @@ function requiereRol(...roles) {
 app.post('/login', loginLimiter, async (req, res) => {
     try {
         const { usuario, password } = req.body;
+        console.log('Login attempt:', usuario, password);
         const result = await db.execute(
-            "SELECT * FROM usuarios WHERE usuario = ? AND password = ?",
+            "SELECT * FROM usuarios WHERE usuario = $1 AND password = $2",
             [usuario, password]
         );
-        const rows = result.rows || result[0] || [];
+        const rows = result.rows || [];
+        console.log('Login result:', rows.length, 'rows');
         if (rows.length === 0) {
             return res.status(401).json({ error: 'Credenciales incorrectas' });
         }
