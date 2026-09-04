@@ -145,9 +145,13 @@ if (DATABASE_URL) {
     function pgConvert(sql, params = []) {
         let idx = 1;
         let s = sql.replace(/\?/g, () => `$${idx++}`);
-        // ON DUPLICATE KEY UPDATE x = VALUES(x) → ON CONFLICT DO UPDATE SET x = EXCLUDED.x
-        s = s.replace(/ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\1\)/g, 'ON CONFLICT DO UPDATE SET $1 = EXCLUDED.$1');
-        s = s.replace(/ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\w+\)/g, 'ON CONFLICT DO UPDATE SET $1 = EXCLUDED.$1');
+        // Detect table name and convert ON DUPLICATE KEY with correct conflict target
+        const pkMap = { sistema_config: 'clave', dignidad_config: 'clave', usuarios: 'usuario' };
+        const tableMatch = s.match(/INSERT\s+INTO\s+(\w+)/i);
+        const tableName = tableMatch ? tableMatch[1] : '';
+        const pk = pkMap[tableName] || 'id';
+        s = s.replace(/ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\1\)/gi, `ON CONFLICT (${pk}) DO UPDATE SET $1 = EXCLUDED.$1`);
+        s = s.replace(/ON\s+DUPLICATE\s+KEY\s+UPDATE\s+(\w+)\s*=\s*VALUES\(\w+\)/gi, `ON CONFLICT (${pk}) DO UPDATE SET $1 = EXCLUDED.$1`);
         // FIELD(x, 'a','b','c') → CASE x WHEN 'a' THEN 1 WHEN 'b' THEN 2 WHEN 'c' THEN 3 END
         s = s.replace(/ORDER BY FIELD\((\w+),\s*'([^']+)'(?:,\s*'([^']+)')*(?:,\s*'([^']+)')*\)/g, (_, col, v1, v2, v3) => {
             let caseExpr = `CASE ${col}`;
