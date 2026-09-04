@@ -329,7 +329,7 @@ async function estaAccesoBloqueado() {
         const [rows] = await db.execute(
             "SELECT valor FROM sistema_config WHERE clave = 'acceso_bloqueado' LIMIT 1"
         );
-        return rows.length > 0 && rows[0].valor === '1';
+        return rows.length > 0 && String(rows[0].valor) === '1';
     } catch (err) {
         console.error('❌ Error leyendo acceso_bloqueado:', err.message);
         return false;
@@ -426,7 +426,7 @@ async function estaUbicacionPermitida() {
         const [rows] = await db.execute(
             "SELECT valor FROM sistema_config WHERE clave = 'permitir_ubicacion' LIMIT 1"
         );
-        return rows.length > 0 && rows[0].valor === '1';
+        return rows.length > 0 && String(rows[0].valor) === '1';
     } catch (err) {
         console.error('❌ Error leyendo permitir_ubicacion:', err.message);
         return false;
@@ -1224,7 +1224,7 @@ app.get('/descargar-excel', async (req, res) => {
         const [configRows] = await db.query(
             "SELECT valor FROM sistema_config WHERE clave = 'permitir_ubicacion' LIMIT 1"
         );
-        const ubicacionHabilitada = configRows.length > 0 && configRows[0].valor === '1';
+        const ubicacionHabilitada = configRows.length > 0 && String(configRows[0].valor) === '1';
 
         const selectFields = `
                 v.dignidad,
@@ -1330,7 +1330,7 @@ app.get('/descargar-excel', async (req, res) => {
 app.get('/descargar-excel-dignidades', async (req, res) => {
     try {
         const [configRows] = await db.query("SELECT valor FROM sistema_config WHERE clave = 'permitir_ubicacion' LIMIT 1");
-        const ubicacionHabilitada = configRows.length > 0 && configRows[0].valor === '1';
+        const ubicacionHabilitada = configRows.length > 0 && String(configRows[0].valor) === '1';
 
         const selectFields = `
                 v.dignidad,
@@ -1608,7 +1608,7 @@ async function estaMostrarRespuestas() {
             await db.execute("INSERT INTO sistema_config (clave, valor) VALUES ('mostrar_respuestas', '1')");
             return true;
         }
-        return rows[0].valor === '1';
+        return String(rows[0].valor) === '1';
     } catch (err) {
         console.error('❌ Error leyendo mostrar_respuestas:', err.message);
         return true;
