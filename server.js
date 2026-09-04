@@ -3,7 +3,6 @@
  */
 
 const express  = require('express');
-const mysql    = require('mysql2');
 const cors     = require('cors');
 const helmet   = require('helmet');
 const ExcelJS  = require('exceljs');
@@ -672,23 +671,31 @@ app.post('/dignidades-estado/:clave', autenticarSesion, requiereRol('superadmin'
     }
 });
 
-pool.getConnection((err, connection) => {
-    if (err) {
-        console.error("❌ Error MySQL:", err.message);
-    } else {
-        console.log("✅ MySQL conectado");
-        connection.release();
-        initSistemaConfig();
-        asegurarColumnaDignidad();
-        asegurarColumnaPasswordUsuarios();
-        asegurarColumnasUbicacion();
-        asegurarColumnasVotosNuevas();
-        asegurarColumnaRespuestas();
-        initDignidadesConfig();
-        initCandidatosTable();
-        initPreguntasTable();
-    }
-});
+if (isPostgres) {
+    console.log('✅ PostgreSQL listo');
+    initSistemaConfig();
+    initDignidadesConfig();
+    initCandidatosTable();
+    initPreguntasTable();
+} else {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error("❌ Error MySQL:", err.message);
+        } else {
+            console.log("✅ MySQL conectado");
+            connection.release();
+            initSistemaConfig();
+            asegurarColumnaDignidad();
+            asegurarColumnaPasswordUsuarios();
+            asegurarColumnasUbicacion();
+            asegurarColumnasVotosNuevas();
+            asegurarColumnaRespuestas();
+            initDignidadesConfig();
+            initCandidatosTable();
+            initPreguntasTable();
+        }
+    });
+}
 
 // ============ 5. VALIDADORES ============
 function validarLogin(req, res, next) {
