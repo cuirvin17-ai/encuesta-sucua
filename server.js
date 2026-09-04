@@ -181,11 +181,12 @@ if (DATABASE_URL) {
             let isInsert = /^\s*INSERT\s/i.test(pgSql);
             let isWrite = /^\s*(INSERT|UPDATE|DELETE)\s/i.test(pgSql);
             if (isInsert && !/RETURNING/i.test(pgSql)) {
-                pgSql += ' RETURNING id';
+                pgSql += ' RETURNING *';
             }
             const result = await pgPool.query(pgSql, converted.params);
             if (isInsert && result.rows.length > 0) {
-                return [{ insertId: result.rows[0].id, affectedRows: result.rowCount }, result.fields];
+                const row = result.rows[0];
+                return [{ insertId: row.id || row.clave || 0, affectedRows: result.rowCount }, result.fields];
             }
             if (isWrite) {
                 return [{ affectedRows: result.rowCount }, result.fields];
@@ -198,11 +199,12 @@ if (DATABASE_URL) {
             let isInsert = /^\s*INSERT\s/i.test(pgSql);
             let isWrite = /^\s*(INSERT|UPDATE|DELETE)\s/i.test(pgSql);
             if (isInsert && !/RETURNING/i.test(pgSql)) {
-                pgSql += ' RETURNING id';
+                pgSql += ' RETURNING *';
             }
             const result = await pgPool.query(pgSql, converted.params);
             if (isInsert && result.rows.length > 0) {
-                return [{ insertId: result.rows[0].id, affectedRows: result.rowCount }, result.fields];
+                const row = result.rows[0];
+                return [{ insertId: row.id || row.clave || 0, affectedRows: result.rowCount }, result.fields];
             }
             if (isWrite) {
                 return [{ affectedRows: result.rowCount }, result.fields];
