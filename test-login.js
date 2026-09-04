@@ -1,24 +1,65 @@
-const { Pool } = require('pg');
+const https = require('https');
 
-const DATABASE_URL = 'postgresql://encuesta_sucua_user:9pRBL1X0GBg2mBN0YYAIRrt2U3FZ0eSz@dpg-dacue12d0e5s73fh73e0-a.virginia-postgres.render.com/encuesta_sucua';
-
-async function test() {
-    const pool = new Pool({
-        connectionString: DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
+// First login as irvin
+function login() {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify({ usuario: 'irvin', password: 'admin123' });
+        const req = https.request({
+            hostname: 'veedores-sucua.onrender.com',
+            path: '/login',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+        }, res => {
+            let body = '';
+            res.on('data', c => body += c);
+            res.on('end', () => {
+                const j = JSON.parse(body);
+                console.log('Login:', j.success, j.token ? 'token:' + j.token.substring(0,10) + '...' : j.message);
+                resolve(j.token);
+            });
+        });
+        req.write(data); req.end();
     });
-    
-    try {
-        const result = await pool.query("SELECT * FROM usuarios WHERE usuario = 'admin' AND password = 'admin123'");
-        console.log('Resultado:', result.rows);
-        
-        const all = await pool.query('SELECT usuario, password, rol FROM usuarios');
-        console.log('Todos los usuarios:', all.rows);
-    } catch (err) {
-        console.error('Error:', err.message);
-    } finally {
-        await pool.end();
-    }
 }
 
-test();
+function save(token) {
+    return new Promise((resolve, reject) => {
+        const payload = {
+            junta_id: 47,
+            id_veedor: 2,
+            dignidad: 'ALCALDE',
+            sobreescribir: true,
+            votos: [
+                { candidato: 'Crhistian Perez', votos: 5 },
+                { candidato: 'Sebastian Rodriguez', votos: 3 },
+                { candidato: 'NULO', votos: 1 }
+            ]
+        };
+        const data = JSON.stringify(payload);
+        const req = https.request({
+            hostname: 'veedores-sucua.onrender.com',
+            path: '/registrar-resultados',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(data),
+                'Authorization': 'Bearer ' + token
+            }
+        }, res => {
+            let body = '';
+            res.on('data', c => body += c);
+            res.on('end', () => {
+                console.log('Status:', res.statusCode);
+                console.log('Body:', body);
+                resolve();
+            });
+        });
+        req.write(data); req.end();
+    });
+}
+
+async function run() {
+    const token = await login();
+    if (token) await save(token);
+}
+run();
