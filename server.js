@@ -163,6 +163,17 @@ if (DATABASE_URL) {
         return { sql: s, params };
     }
 
+    function coerceNumericStrings(rows) {
+        if (!rows || !rows.length) return rows;
+        return rows.map(row => {
+            const out = {};
+            for (const [k, v] of Object.entries(row)) {
+                out[k] = (typeof v === 'string' && /^\d+$/.test(v)) ? Number(v) : v;
+            }
+            return out;
+        });
+    }
+
     db = {
         execute: async (sql, params = []) => {
             const converted = pgConvert(sql, params);
@@ -179,7 +190,7 @@ if (DATABASE_URL) {
             if (isWrite) {
                 return [{ affectedRows: result.rowCount }, result.fields];
             }
-            return [result.rows, result.fields];
+            return [coerceNumericStrings(result.rows), result.fields];
         },
         query: async (sql, params = []) => {
             const converted = pgConvert(sql, params);
@@ -196,7 +207,7 @@ if (DATABASE_URL) {
             if (isWrite) {
                 return [{ affectedRows: result.rowCount }, result.fields];
             }
-            return [result.rows, result.fields];
+            return [coerceNumericStrings(result.rows), result.fields];
         }
     };
     console.log('✅ PostgreSQL detectado (DATABASE_URL)');
