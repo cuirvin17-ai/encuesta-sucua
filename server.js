@@ -131,6 +131,7 @@ app.get('/tile/:z/:x/:y', async (req, res) => {
 const DATABASE_URL = process.env.DATABASE_URL;
 let db;
 let pgPool;
+let mysqlPool;
 let isPostgres = false;
 
 if (DATABASE_URL) {
@@ -220,19 +221,22 @@ if (DATABASE_URL) {
     };
     console.log('✅ PostgreSQL detectado (DATABASE_URL)');
 } else {
-    // MySQL (local)
+    // MySQL (local) o TiDB Cloud (TLS obligatorio en endpoint público)
     const mysql = require('mysql2');
-    const mysqlPool = mysql.createPool({
+    const useSSL = process.env.DB_SSL === 'true' || (process.env.DB_HOST || '').includes('tidbcloud.com');
+    mysqlPool = mysql.createPool({
         host:     process.env.DB_HOST     || 'localhost',
+        port:     parseInt(process.env.DB_PORT || '3306', 10),
         user:     process.env.DB_USER     || 'root',
         password: process.env.DB_PASSWORD || 'Betoben1',
         database: process.env.DB_NAME     || 'encuesta_sucua_bd',
+        ssl:      useSSL ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
     });
     db = mysqlPool.promise();
-    console.log('✅ MySQL detectado (local)');
+    console.log(useSSL ? '✅ MySQL conectado (TLS habilitado)' : '✅ MySQL detectado (local)');
 }
 
 async function initSistemaConfig() {
@@ -697,7 +701,7 @@ if (isPostgres) {
     initCandidatosTable();
     initPreguntasTable();
 } else {
-    pool.getConnection((err, connection) => {
+    mysqlPool.getConnection((err, connection) => {
         if (err) {
             console.error("❌ Error MySQL:", err.message);
         } else {
