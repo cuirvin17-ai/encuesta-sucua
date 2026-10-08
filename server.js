@@ -1900,15 +1900,22 @@ app.put('/candidatos/:id', autenticarSesion, requiereRol('superadmin'), upload.s
     try {
         const { id } = req.params;
         const { dignidad, nombre, zona, orden } = req.body;
-        const [existing] = await db.execute('SELECT foto FROM candidatos WHERE id = ?', [id]);
+        const [existing] = await db.execute('SELECT foto, nombre, dignidad FROM candidatos WHERE id = ?', [id]);
         if (!existing.length) {
             return res.status(404).json({ success: false, message: 'Candidato no encontrado' });
         }
         const foto = req.file ? req.file.filename : existing[0].foto;
+        const nuevaDig = dignidad || 'ALCALDE';
         await db.execute(
             'UPDATE candidatos SET dignidad = ?, nombre = ?, foto = ?, zona = ?, orden = ? WHERE id = ?',
-            [dignidad || 'ALCALDE', nombre, foto, zona || null, parseInt(orden) || 0, id]
+            [nuevaDig, nombre, foto, zona || null, parseInt(orden) || 0, id]
         );
+        if (existing[0].nombre !== nombre || existing[0].dignidad !== nuevaDig) {
+            await db.execute(
+                'UPDATE votos SET candidato = ?, dignidad = ? WHERE candidato = ? AND dignidad = ?',
+                [nombre, nuevaDig, existing[0].nombre, existing[0].dignidad]
+            );
+        }
         res.json({ success: true, message: 'Candidato actualizado' });
     } catch (err) {
         console.error('❌ Error actualizando candidato:', err.message);
@@ -1920,12 +1927,18 @@ app.put('/candidatos/:id', autenticarSesion, requiereRol('superadmin'), upload.s
 app.delete('/candidatos/:id', autenticarSesion, requiereRol('superadmin'), async (req, res) => {
     try {
         const { id } = req.params;
-        const [existing] = await db.execute('SELECT foto FROM candidatos WHERE id = ?', [id]);
+        const [existing] = await db.execute('SELECT foto, nombre, dignidad FROM candidatos WHERE id = ?', [id]);
         if (!existing.length) {
             return res.status(404).json({ success: false, message: 'Candidato no encontrado' });
         }
         await db.execute('DELETE FROM candidatos WHERE id = ?', [id]);
-        res.json({ success: true, message: 'Candidato eliminado' });
+        const [del] = await db.execute('DELETE FROM votos WHERE candidato = ? AND dignidad = ?', [existing[0].nombre, existing[0].dignidad]);
+        res.json({
+            success: true,
+            message: del.affectedRows
+                ? `Candidato eliminado (${del.affectedRows} voto(s) eliminados)`
+                : 'Candidato eliminado'
+        });
     } catch (err) {
         console.error('❌ Error eliminando candidato:', err.message);
         res.status(500).json({ success: false, message: 'Error al eliminar candidato' });
