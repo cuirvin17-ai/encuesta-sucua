@@ -1739,6 +1739,9 @@ app.post('/votar-preguntas', voteLimiter, async (req, res) => {
         if (await estaAccesoBloqueado()) {
             return res.status(403).json({ success: false, codigo: 'ACCESO_BLOQUEADO', message: 'El sistema está bloqueado.' });
         }
+        if (!(await estaDignidadHabilitada('PREGUNTAS'))) {
+            return res.status(403).json({ success: false, codigo: 'DIGNIDAD_DESHABILITADA', message: 'La dignidad seleccionada está deshabilitada temporalmente.' });
+        }
 
         const permitirUb = await estaUbicacionPermitida();
         let lat = null, lng = null;

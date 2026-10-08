@@ -34,6 +34,23 @@ function formatearDignidad(d) {
     }
 }
 
+const OPCIONES_ORIGINALES_DIGNIDAD = {};
+
+function filtrarOpcionesDignidad(id, habilitadas) {
+    const sel = document.getElementById(id);
+    if (!sel) return false;
+    if (!OPCIONES_ORIGINALES_DIGNIDAD[id]) {
+        OPCIONES_ORIGINALES_DIGNIDAD[id] = [...sel.options].map(o => ({ value: o.value, text: o.textContent }));
+    }
+    const antes = sel.value;
+    sel.innerHTML = OPCIONES_ORIGINALES_DIGNIDAD[id]
+        .filter(o => !o.value || o.value === 'todas' || habilitadas.has(o.value))
+        .map(o => `<option value="${o.value}">${o.text}</option>`)
+        .join('');
+    if ([...sel.options].some(o => o.value === antes)) sel.value = antes;
+    return sel.value !== antes;
+}
+
 async function cargarFiltroDignidad() {
     const select = document.getElementById('filtroDignidad');
     if (!select) return;
@@ -48,10 +65,9 @@ async function cargarFiltroDignidad() {
             throw new Error('No se pudo leer la configuración');
         }
 
-        const items = (esSuperadmin()
-            ? data.dignidades
-            : data.dignidades.filter(d => d.habilitada))
-            .filter(d => d.clave !== 'PREGUNTAS');
+        const habilitadas = new Set(data.dignidades.filter(d => d.habilitada).map(d => d.clave));
+        const items = data.dignidades
+            .filter(d => d.habilitada && d.clave !== 'PREGUNTAS');
 
         select.innerHTML = items.map(d =>
             `<option value="${d.clave}">${formatearDignidad(d.clave)}</option>`
@@ -60,7 +76,13 @@ async function cargarFiltroDignidad() {
         const guardada = getDignidadActual();
         if (guardada && items.some(d => d.clave === guardada)) {
             select.value = guardada;
+        } else if (items.length > 0) {
+            select.value = items[0].clave;
+            setDignidadActual(items[0].clave);
         }
+
+        if (filtrarOpcionesDignidad('filtroCandidatosDignidad', habilitadas)) cargarCandidatos();
+        if (filtrarOpcionesDignidad('filtroMapaDignidad', habilitadas)) cargarMapaVotos();
     } catch (err) {
         console.error('Error cargando filtro dignidad:', err);
     }

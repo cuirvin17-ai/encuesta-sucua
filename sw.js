@@ -4,8 +4,8 @@
  */
 
 // ✅ Bump de versión por cambios de ruta y assets
-const CACHE_NAME    = 'sucua-v26';
-const RUNTIME_CACHE = 'sucua-runtime-v10';
+const CACHE_NAME    = 'sucua-v27';
+const RUNTIME_CACHE = 'sucua-runtime-v11';
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="es">
